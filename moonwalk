@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+new_dir=$(pwd)
+strict=""
+findDir=""
+
+# How deep are we in the directory nest relative to home dir.
+# Makes safe assumption that home directory has two forward slashes.
+justSlashes="${new_dir//[^\/]}"
+let nestingLevel=${#justSlashes}-2
+check=""
+
+while getopts "cs:" options; do
+    case "$options" in
+      s) 
+        # Strict match - force exact matcing
+        strict="${OPTARG}"
+        ;;
+    esac
+done
+
+
+findDir="*${!#}*"
+[[ ${#strict} -gt 0 ]] && findDir="$strict"
+
+
+for (( i=0; i<"$nestingLevel"; i++ ))
+do
+  new_dir="$new_dir/.."
+
+  match=$(find $new_dir -maxdepth 1 -type d -name "$findDir" 2>/dev/null)
+  if [ ${#match} -gt 0 ]; then
+    for dir in $match
+    do
+      echo "Found match: $dir"
+      echo "Hit any key to change directory"
+      read      
+      cd "$dir"
+      break
+    done
+    break
+  fi
+done
+  
+[[ ${#match} -eq 0 ]] && echo "No match for directory $findDir"
